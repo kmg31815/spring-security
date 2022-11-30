@@ -9,6 +9,8 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
+import com.kmg.demo.util.UserAccess;
+
 /**
  * 讓此類別的安全性設置生效 (包含csrf保護也會自動生效)
  * 
@@ -26,16 +28,17 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 	/*
 	 * 設定 API 授權規則
 	 */
-	
+
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
 		http.authorizeHttpRequests() // 開始自訂授權規則
-				.antMatchers(HttpMethod.GET, "/users/**").authenticated() // 驗證規則(?
-				.antMatchers(HttpMethod.GET).permitAll() // 不驗證
-				.antMatchers(HttpMethod.POST, "/users").permitAll() // 不驗證
+				.antMatchers(HttpMethod.POST, "/users").permitAll() // 允許所有請求
+				.antMatchers(HttpMethod.GET, "/users").hasAuthority(UserAccess.ADMIN.toString()) // 需具備管理員權限才可存取
+				.antMatchers(HttpMethod.GET, "/users/*").authenticated() // 只要通過身份驗證即可存取
+				.antMatchers(HttpMethod.GET).permitAll() // 允許所有請求
 
 				// 對剩下的 API 定義規則
-				.anyRequest().authenticated() // 驗證規則(?
+				.anyRequest().authenticated() // 通過身份驗證即可存取
 
 				.and()
 
@@ -53,10 +56,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 				.passwordEncoder(new BCryptPasswordEncoder());
 	}
 
-//	=================================================================================================
-	
-	
-	
 //	=================================================================================================
 
 //	@Override

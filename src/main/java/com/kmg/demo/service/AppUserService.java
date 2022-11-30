@@ -1,6 +1,7 @@
 package com.kmg.demo.service;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -24,7 +25,19 @@ public class AppUserService {
 	}
 
 	public AppUser getByUsername(String username) {
-		return dao.getByUsername(username);
+		Optional<AppUser> appUser = dao.findByUsername(username);
+		if (appUser.isEmpty()) {
+			return null;
+		}
+		return appUser.get();
+	}
+
+	public AppUser getById(int id) {
+		Optional<AppUser> appUser = dao.findById(id);
+		if (appUser.isEmpty()) {
+			return null;
+		}
+		return appUser.get();
 	}
 
 	public List<AppUser> getAllUsers() {
