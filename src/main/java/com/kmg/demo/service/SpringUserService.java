@@ -29,7 +29,7 @@ public class SpringUserService implements UserDetailsService {
 		List<SimpleGrantedAuthority> authorities = new ArrayList<>();
 		authorities.add(new SimpleGrantedAuthority(appUser.getAccess()));
 
-		// 第三個參數是 authorities，是用來定義使用者擁有的權限
+		// 第三個參數是 GrantedAuthority，是用來定義使用者擁有的權限
 		return new User(appUser.getUsername(), appUser.getPassword(), authorities);
 	}
 

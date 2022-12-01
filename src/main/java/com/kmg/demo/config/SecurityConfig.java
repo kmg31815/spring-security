@@ -2,14 +2,17 @@ package com.kmg.demo.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.web.authentication.logout.HttpStatusReturningLogoutSuccessHandler;
 
 import com.kmg.demo.util.UserAccess;
+import com.kmg.demo.util.UserLogoutHandler;
 
 /**
  * 讓此類別的安全性設置生效 (包含csrf保護也會自動生效)
@@ -25,9 +28,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 	@Autowired
 	private UserDetailsService userDetailsService;
 
-	/*
-	 * 設定 API 授權規則
-	 */
+	@Autowired
+	private UserLogoutHandler logoutHandler;
 
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
@@ -40,13 +42,16 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 				// 對剩下的 API 定義規則
 				.anyRequest().authenticated() // 通過身份驗證即可存取
 
+				.and().formLogin() // 啟用內建的登入畫面
+//				.httpBasic() // dialog 登入
+
+				.and().logout().logoutUrl("/logout").addLogoutHandler(logoutHandler)
+				.logoutSuccessHandler(new HttpStatusReturningLogoutSuccessHandler(HttpStatus.OK))
+//				.logoutSuccessUrl("/hello")
+
 				.and()
-
 				// 關閉對 CSRF（跨站請求偽造）攻擊的防護。這樣 Security 機制才不會拒絕外部直接對 API 發出的請求，如 Postman 與前端
-				.csrf().disable()
-
-				.formLogin(); // 啟用內建的登入畫面
-//				.httpBasic(); // dialog 登入
+				.csrf().disable();
 	}
 
 	@Override
@@ -56,28 +61,17 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 				.passwordEncoder(new BCryptPasswordEncoder());
 	}
 
-//	=================================================================================================
-
-//	@Override
-//	protected void configure(HttpSecurity http) throws Exception {
-//		http.authorizeHttpRequests() // 開始自訂授權規則
-//
-//		// 傳入 HttpMethod 與 API 路徑，後面接著授權方式，這樣就定義好一個規則
-////		.antMatchers(HttpMethod.GET, "/security/*").authenticated() // 驗證規則(?
-//				.antMatchers(HttpMethod.GET, "/security/test1/**").permitAll() // 不驗證
-//				.antMatchers(HttpMethod.GET, "/security/test4/*").permitAll() // 不驗證
-//				.antMatchers(HttpMethod.POST, "/security/test5").permitAll() // 不驗證
-//
-//				// 對剩下的 API 定義規則
-//				.anyRequest().authenticated() // 驗證規則(?
-//
-//				.and()
-//
-//				// 關閉對 CSRF（跨站請求偽造）攻擊的防護。這樣 Security 機制才不會拒絕外部直接對 API 發出的請求，如 Postman 與前端
-//				.csrf().disable()
-//
-//				.formLogin(); // 啟用內建的登入畫面
-////		.httpBasic(); // dialog 登入
-//	}
+	/*
+	 * BasicAuthenticationFilter.doFilterInternal 會
+	 * 
+	 * 1. 將 "用戶輸入的帳號密碼" 轉換成 UsernamePasswordAuthenticationToken
+	 * 
+	 * 2. 將上述產生的 token 傳遞給 AuthenticationManager 進行 "登錄認證"
+	 * 
+	 * 3. 認證成功後會回傳 封裝了"用戶權限"等資料的 Authentication (不包含token) -
+	 * 這裡"封裝了用戶權限等資料的 Authentication" 應該是 SpringUserService 回傳的 UserDetails (?
+	 * 
+	 * 4. 最後將該 Authentication 實例賦予給當前的 SecurityContext(即該次請求的"身份狀態")
+	 */
 
 }
