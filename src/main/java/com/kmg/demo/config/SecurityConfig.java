@@ -38,17 +38,15 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 				.antMatchers(HttpMethod.GET, "/users").hasAuthority(UserAccess.ADMIN.toString()) // 需具備管理員權限才可存取
 				.antMatchers(HttpMethod.GET, "/users/*").authenticated() // 只要通過身份驗證即可存取
 				.antMatchers(HttpMethod.GET).permitAll() // 允許所有請求
-
-				// 對剩下的 API 定義規則
-				.anyRequest().authenticated() // 通過身份驗證即可存取
-
+				.anyRequest().authenticated() // (對剩下的 API 定義規則) 通過身份驗證即可存取
+				
 				.and().formLogin() // 啟用內建的登入畫面
 //				.httpBasic() // dialog 登入
-
+				
 				.and().logout().logoutUrl("/logout").addLogoutHandler(logoutHandler)
 				.logoutSuccessHandler(new HttpStatusReturningLogoutSuccessHandler(HttpStatus.OK))
 //				.logoutSuccessUrl("/hello")
-
+				
 				.and()
 				// 關閉對 CSRF（跨站請求偽造）攻擊的防護。這樣 Security 機制才不會拒絕外部直接對 API 發出的請求，如 Postman 與前端
 				.csrf().disable();
@@ -68,8 +66,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 	 * 
 	 * 2. 將上述產生的 token 傳遞給 AuthenticationManager 進行 "登錄認證"
 	 * 
-	 * 3. 認證成功後會回傳 封裝了"用戶權限"等資料的 Authentication (不包含token) -
-	 * 這裡"封裝了用戶權限等資料的 Authentication" 應該是 SpringUserService 回傳的 UserDetails (?
+	 * 3. 認證成功後會回傳 封裝了"用戶權限"等資料的 Authentication (不包含token)
+	 * 		- 這裡"封裝了用戶權限等資料的 Authentication" 就是 SpringUserService 回傳的 UserDetails
 	 * 
 	 * 4. 最後將該 Authentication 實例賦予給當前的 SecurityContext(即該次請求的"身份狀態")
 	 */
